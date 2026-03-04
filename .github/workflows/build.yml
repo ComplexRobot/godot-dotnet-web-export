@@ -4,7 +4,7 @@ on: workflow_dispatch
 
 env:
   BUILD_NAME: web_export
-  STATUS_SUFFIX:
+  STATUS_SUFFIX: 2
 
 jobs:
   build-windows-editor:
