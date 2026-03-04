@@ -4,6 +4,7 @@ on: workflow_dispatch
 
 env:
   BUILD_NAME: web_export
+  STATUS_SUFFIX:
 
 jobs:
   build-windows-editor:
@@ -162,7 +163,7 @@ jobs:
           hash=${BASH_REMATCH[5]}
 
           # Get a filename matching official Godot releases, e.g.: Godot_v4.6.1-stable_mono_web_export_win64
-          filename=Godot_v${version}-${status}_${mono//./_}${build_name//./_}_win64
+          filename=Godot_v${version}-${status}${{ env.STATUS_SUFFIX }}_${mono//./_}${build_name//./_}_win64
 
           # Move the files to a folder
           mkdir $filename
@@ -254,12 +255,12 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: ${{ needs.build-final-zip.outputs.filename }}.zip
-          tag_name: ${{ needs.build-final-zip.outputs.version }}-${{ needs.build-final-zip.outputs.status }}
+          tag_name: ${{ needs.build-final-zip.outputs.version }}-${{ needs.build-final-zip.outputs.status }}${{ env.STATUS_SUFFIX }}
           target_commitish: ${{ github.ref }}
           prerelease: ${{ needs.build-final-zip.outputs.status != 'stable' }}
           body: >-
             Windows build of [Godot Engine](https://godotengine.org/)
-            ${{ needs.build-final-zip.outputs.version }}-${{ needs.build-final-zip.outputs.status }}
+            ${{ needs.build-final-zip.outputs.version }}-${{ needs.build-final-zip.outputs.status }}${{ env.STATUS_SUFFIX }}
             with experimental support for exporting C# projects to the web.
 
 
