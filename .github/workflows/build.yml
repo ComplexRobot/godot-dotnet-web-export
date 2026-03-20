@@ -12,8 +12,8 @@ jobs:
 
     env:
       SCONS_FLAGS: >-
-        ccflags="/O2 /Ob3 /GL /sdl- /GS- /arch:SSE4.2 /MP /DNDEBUG"
-        linkflags="/LTCG /OPT:REF /OPT:ICF"
+        ccflags="/O2 /Ob3 /sdl- /GS- /arch:SSE4.2 /MP /DNDEBUG"
+        linkflags="/OPT:REF /OPT:ICF"
 
     steps:
       - name: Checkout Repository
