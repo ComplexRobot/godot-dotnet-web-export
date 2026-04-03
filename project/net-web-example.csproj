@@ -1,14 +1,17 @@
-<Project Sdk="Godot.NET.Sdk/4.6.1">
+<Project Sdk="Godot.NET.Sdk/4.6.2">
     <PropertyGroup>
         <TargetFramework>net9.0</TargetFramework>
         <EnableDynamicLoading>true</EnableDynamicLoading>
-        <StartAction>Program</StartAction>
-        <StartProgram>D:\Documents\Godot\Godot_v4\GodotSharp_v4.exe</StartProgram>
+        <!-- <StartAction>Program</StartAction> -->
+        <!-- <StartProgram>D:\Documents\Godot\Godot_v4\GodotSharp_v4.exe</StartProgram> -->
         <!--    <StartArguments>optional</StartArguments>-->
         <StartWorkingDirectory>./</StartWorkingDirectory>
     </PropertyGroup>
     <ItemGroup>
-        <TrimmerRootAssembly Include="System.Private.CoreLib" />
-        <TrimmerRootAssembly Include="System.Runtime" />
+      <PackageReference Include="Newtonsoft.Json" Version="13.0.5-beta1" />
     </ItemGroup>
+    <!-- <ItemGroup> -->
+        <!-- <TrimmerRootAssembly Include="System.Private.CoreLib" /> -->
+        <!-- <TrimmerRootAssembly Include="System.Runtime" /> -->
+    <!-- </ItemGroup> -->
 </Project>
