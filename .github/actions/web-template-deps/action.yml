@@ -28,6 +28,8 @@ runs:
 
     - name: Set Up Emscripten SDK
       uses: mymindstorm/setup-emsdk@v14
+      with:
+        version: 6.0.2
 
     - name: Download Artifacts From Editor Build
       uses: actions/download-artifact@v8
