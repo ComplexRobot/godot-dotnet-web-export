@@ -4,7 +4,7 @@ on: workflow_dispatch
 
 env:
   BUILD_NAME: web_export
-  GODOT_VERSION_STATUS: dev2
+  GODOT_VERSION_STATUS: dev3
 
 jobs:
   build-windows-editor:
