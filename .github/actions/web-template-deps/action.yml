@@ -28,9 +28,6 @@ runs:
 
     - name: Set Up Emscripten SDK
       uses: mymindstorm/setup-emsdk@v14
-      # emsdk 6.0.6 with LTO ran out of memory
-      with:
-        version: 6.0.5
 
     - name: Download Artifacts From Editor Build
       uses: actions/download-artifact@v8
