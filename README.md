@@ -2,8 +2,8 @@
 
 Simple project which enables experimental web export support for C# projects.
 
-Visit the [Releases](https://github.com/ComplexRobot/godot-dotnet-web-export/releases) for a pre-built binary for Windows.
-On macOS and Linux you can build the editor from source and use the web export templates from the Windows release
+Visit the [Releases](https://github.com/ComplexRobot/godot-dotnet-web-export/releases) for pre-built binaries for
+Windows and macOS (Apple Silicon). On Linux or an Intel Mac you can build the editor from source
 (see [macOS and Linux](#macos-and-linux)).
 
 More information is in the release notes.
@@ -35,8 +35,7 @@ More information is in the release notes.
 - Your project must include a `Program.cs` containing at least one top-level statement.
   - The simplest is a `Program.cs` simply containing `{}`. (Sample file included.)
 
-- Done automatically by the `install.bat` included in the release (Windows) or by `install.sh` in this repository
-  (macOS and Linux):
+- Done automatically by the included `install.bat` (Windows) or `install.sh` (macOS and Linux):
   - Copy the included `web_release.zip` and `web_debug.zip` files to the Godot export templates folder
     as well as the included `nuget` folder to a valid NuGet source:
 
@@ -86,9 +85,17 @@ You can use a `global.json` (sample file included) to control the .NET SDK versi
 
 ### macOS and Linux
 
-There is no pre-built editor for macOS or Linux yet, but the editor builds from the same Godot source as the
-Windows release, and the `web_release.zip` and `web_debug.zip` templates from the Windows release work with it
-unchanged. The official Godot .NET editor can't be used because it refuses to export C# projects to the web.
+The macOS release contains an editor for Apple Silicon. Extract it, run `bash install.sh` from the extracted
+folder and open the app. The app is not notarised, so macOS blocks it the first time it is opened. Allow it under
+System Settings > Privacy & Security, or remove the quarantine flag:
+
+```sh
+xattr -dr com.apple.quarantine Godot_v4.7.2-stable_mono_web_export_macos_arm64.app
+```
+
+On Linux or an Intel Mac you need to build the editor yourself. It builds from the same Godot source as the
+releases, and the `web_release.zip` and `web_debug.zip` templates from a release work with it unchanged. The
+official Godot .NET editor can't be used because it refuses to export C# projects to the web.
 
 These steps were tested on an Apple Silicon Mac with only the Xcode Command Line Tools installed.
 Linux should be similar with `platform=linuxbsd`, but has not been tested.

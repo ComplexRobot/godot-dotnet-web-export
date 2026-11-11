@@ -54,6 +54,43 @@ jobs:
             godot\bin\glue\**
 
 
+  build-macos-editor:
+    runs-on: macos-latest
+
+    env:
+      # The Vulkan driver needs the MoltenVK SDK; the editor uses Metal instead.
+      SCONS_FLAGS: >-
+        arch=arm64
+        vulkan=no
+        optimize=speed
+        lto=thin
+        ccflags="-DNDEBUG"
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.ref }}
+          submodules: recursive
+
+      - name: Set Up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: 3.x
+
+      - name: Set Up SCons
+        run: pip install scons
+
+      - name: Build Editor (macOS)
+        run: scons -C godot platform=macos target=editor module_mono_enabled=yes ${{ env.SCONS_FLAGS }}
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: godot.macos.mono.${{ env.BUILD_NAME }}.editor
+          path: godot/bin/godot.macos.editor.arm64.mono
+
+
   # Must build export templates on Linux due to the "command line too long" error on windows.
   build-export-template-release:
     runs-on: ubuntu-latest
@@ -176,6 +213,7 @@ jobs:
           mv Program.cs $filename
           mv global.json $filename
           mv README.md $filename
+          mv install.sh $filename
 
           # Save the output for use in other steps
           echo "version=${version}" >> "$GITHUB_OUTPUT"
@@ -240,10 +278,78 @@ jobs:
           path: ${{ steps.prepare.outputs.filename }}.zip
 
 
+  # Must run on macOS to sign the app bundle.
+  build-final-zip-macos:
+    runs-on: macos-latest
+
+    needs: [build-final-zip, build-macos-editor]
+
+    outputs:
+      filename: ${{ steps.prepare.outputs.filename }}
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.ref }}
+          submodules: recursive
+
+      - name: Download Artifacts From Editor Build
+        uses: actions/download-artifact@v8
+        with:
+          name: godot.macos.mono.${{ env.BUILD_NAME }}.editor
+          path: godot/bin
+
+      - name: Download Artifacts From Template Builds
+        uses: actions/download-artifact@v8
+        with:
+          pattern: godot.windows.mono.${{ env.BUILD_NAME }}.template_*
+          path: godot/bin
+          merge-multiple: true
+
+      - name: Prepare Files
+        id: prepare
+        run: |
+          # Same name as the Windows zip, e.g.: Godot_v4.6.1-stable_mono_web_export_macos_arm64
+          windows_filename=${{ needs.build-final-zip.outputs.filename }}
+          filename=${windows_filename%_win64}_macos_arm64
+          app=${filename}/${filename}.app
+
+          # Build the app bundle the same way as the official Godot releases
+          mkdir $filename
+          cp -R godot/misc/dist/macos_tools.app $app
+          mkdir -p ${app}/Contents/MacOS
+          mv godot/bin/godot.macos.editor.arm64.mono ${app}/Contents/MacOS/Godot
+          chmod +x ${app}/Contents/MacOS/Godot
+          strip ${app}/Contents/MacOS/Godot
+          mv godot/bin/GodotSharp ${app}/Contents/Resources/GodotSharp
+          codesign --force --deep --sign - $app
+
+          mv godot/bin/nuget $filename
+          mv godot/bin/godot.web.template_release.wasm32.mono.zip ${filename}/web_release.zip
+          mv godot/bin/godot.web.template_debug.wasm32.mono.zip ${filename}/web_debug.zip
+          mv Program.cs $filename
+          mv global.json $filename
+          mv README.md $filename
+          mv install.sh $filename
+          chmod +x ${filename}/install.sh
+
+          echo "filename=${filename}" >> "$GITHUB_OUTPUT"
+
+      - name: Create Zip File
+        run: ditto -c -k --keepParent ${{ steps.prepare.outputs.filename }} ${{ steps.prepare.outputs.filename }}.zip
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ steps.prepare.outputs.filename }}.artifact
+          path: ${{ steps.prepare.outputs.filename }}.zip
+
+
   upload-release:
     runs-on: ubuntu-latest
 
-    needs: build-final-zip
+    needs: [build-final-zip, build-final-zip-macos]
 
     steps:
       - name: Download Artifact Zip File
@@ -251,15 +357,22 @@ jobs:
         with:
           name: ${{ needs.build-final-zip.outputs.filename }}.artifact
 
+      - name: Download Artifact Zip File (macOS)
+        uses: actions/download-artifact@v8
+        with:
+          name: ${{ needs.build-final-zip-macos.outputs.filename }}.artifact
+
       - name: Upload Release
         uses: softprops/action-gh-release@v2
         with:
-          files: ${{ needs.build-final-zip.outputs.filename }}.zip
+          files: |
+            ${{ needs.build-final-zip.outputs.filename }}.zip
+            ${{ needs.build-final-zip-macos.outputs.filename }}.zip
           tag_name: ${{ needs.build-final-zip.outputs.version }}-${{ needs.build-final-zip.outputs.status }}
           target_commitish: ${{ github.ref }}
           prerelease: ${{ needs.build-final-zip.outputs.status != 'stable' }}
           body: >-
-            Windows build of [Godot Engine](https://godotengine.org/)
+            Windows and macOS (Apple Silicon) builds of [Godot Engine](https://godotengine.org/)
             ${{ needs.build-final-zip.outputs.version }}-${{ needs.build-final-zip.outputs.status }}
             with experimental support for exporting C# projects to the web.
 
@@ -268,7 +381,7 @@ jobs:
 
             1. Extract the zip file.
 
-            2. Run the included `install.bat`.
+            2. Run the included `install.bat` (Windows) or `bash install.sh` (macOS).
 
             3. Change your Godot project's `.csproj` `TargetFramework` to `net9.0`, i.e., `<TargetFramework>net9.0</TargetFramework>`.
 
